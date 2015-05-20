@@ -5,16 +5,23 @@ from setuptools import setup, find_packages
 import exportdb
 
 
-def read_file(name, as_list=False):
+def read_file(name):
     with open(os.path.join(os.path.dirname(__file__), name)) as f:
-        if as_list:
-            return f.readlines()
         return f.read()
 
 
 readme = read_file('README.rst')
-requirements = read_file('requirements/base.txt', as_list=True)
-test_requirements = read_file('requirements/test.txt', as_list=True)
+requirements = [
+    'Django>=1.6',
+    'django-import-export==0.2.7',
+    'celery==3.1.17',
+    'django-celery==3.0.17',
+    'rules==0.4',
+]
+test_requirements = [
+    'factory-boy==2.5.2',
+    'coverage==3.7.1'
+]
 
 setup(
     name='django-exportdb',
