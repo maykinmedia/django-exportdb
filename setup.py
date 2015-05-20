@@ -35,7 +35,9 @@ setup(
     url='',  # TODO
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'Framework :: Django',
+        'Framework :: Django :: 1.6',
+        'Framework :: Django :: 1.7',
+        'Framework :: Django :: 1.8',
         'Intended Audience :: Developers',
         'Operating System :: Unix',
         'Operating System :: MacOS',

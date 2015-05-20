@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}{% load i18n admin_static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form action="." method="post">
+        <div>
+
+            <fieldset class="module aligned">
+                <h2>{% trans "Confirm export" %}</h2>
+
+                <div class="form-row">
+                    {% trans "The following object types will be exported" %}
+                    <ul>
+                        {% for model in models %}
+                            <li>{{ model }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </fieldset>
+
+        </div>
+
+
+        <div class="submit-row">
+            <input type="submit" value="{% trans "Confirm" %}" class="default" name="_save">
+        </div>
+    </form>
+</div>
+{% endblock %}
