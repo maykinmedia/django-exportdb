@@ -44,7 +44,7 @@ setup(
     author='Maykin Media, Sergei Maertens',
     author_email='sergei@maykinmedia.nl',
     platforms=['any'],
-    url='',  # TODO
+    url='https://github.com/maykinmedia/django-exportdb',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django :: 1.6',
