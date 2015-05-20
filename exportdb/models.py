@@ -1,1 +1,1 @@
-# empty on purpose
+from . import permissions  # noqa
