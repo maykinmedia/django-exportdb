@@ -65,8 +65,11 @@ class ExportView(ExportPermissionMixin, FormView):
         )
 
         exporter = self.get_exporter(resources)
-        exporter.export_to = os.path.join(EXPORT_ROOT, filename)
-        outfile = exporter.export(format=format)
+        databook = exporter.export()
+
+        export_to = os.path.join(EXPORT_ROOT, filename)
+        with open(export_to, 'wb') as outfile:
+            outfile.write(getattr(databook, format))
 
         content_type, encoding = mimetypes.guess_type(outfile.name)
         content_type = content_type or 'application/octet-stream'
