@@ -28,6 +28,8 @@ setup(
     extras_require={
         'test': test_requirements,
     },
+    tests_require=test_requirements,
+    test_suite='tests.runtests.runtests',
 
     # PyPI metadata
     description='Dump the entire database to xlsx workbook with a sheet per model',
