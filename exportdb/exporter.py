@@ -30,9 +30,7 @@ def get_resources():
     Gets the resources of models to export.
     """
     models = get_export_models()
-    return [
-        resources.modelresource_factory(model) for model in models
-    ]
+    return [resources.modelresource_factory(model) for model in models]
 
 
 def get_resource_for_model(model):

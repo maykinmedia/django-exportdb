@@ -13,7 +13,8 @@ def read_file(name, as_list=False):
 
 
 readme = read_file('README.rst')
-requirements = read_file('requirements.txt', as_list=True)
+requirements = read_file('requirements/base.txt', as_list=True)
+test_requirements = read_file('requirements/test.txt', as_list=True)
 
 setup(
     name='django-exportdb',
@@ -21,10 +22,12 @@ setup(
     license='MIT',
 
     # Packaging
-    packackes=find_packages(exclude=('tests', 'tests.*')),
+    packages=find_packages(exclude=('tests', 'tests.*')),
     install_requires=requirements,
     include_package_data=True,
-    # zip_safe=False # let bdist figure it out itself
+    extras_require={
+        'test': test_requirements,
+    },
 
     # PyPI metadata
     description='Dump the entire database to xlsx workbook with a sheet per model',
