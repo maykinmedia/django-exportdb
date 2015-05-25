@@ -42,11 +42,17 @@ def runtests():
     test_dir = os.path.dirname(__file__)
     sys.path.insert(0, test_dir)
 
+    import django
     from django.test.utils import get_runner
+
+    try:
+        django.setup()  # 1.7 and upwards
+    except AttributeError:
+        pass
 
     TestRunner = get_runner(settings)
     test_runner = TestRunner(verbosity=1, interactive=True)
-    failures = test_runner.run_tests(['.'])
+    failures = test_runner.run_tests(['app'])
     sys.exit(failures)
 
 
