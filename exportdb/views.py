@@ -2,8 +2,9 @@ import mimetypes
 import os
 
 from django import forms
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ImproperlyConfigured
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -35,7 +36,11 @@ class ExportView(ExportPermissionMixin, FormView):
 
     def get_export_models(self, **kwargs):
         kwargs.setdefault('admin_only', False)
-        return get_export_models(**kwargs)
+        try:
+            return get_export_models(**kwargs)
+        except ImproperlyConfigured as e:
+            messages.error(self.request, e.args[0])
+        return []
 
     def get_exporter(self, resources):
         return self.exporter_class(resources)
