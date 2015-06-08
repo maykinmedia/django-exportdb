@@ -1,6 +1,7 @@
 import logging
 import os
 
+from django.conf import settings
 from django.utils import timezone
 
 from celery import shared_task, current_task
@@ -38,5 +39,5 @@ def export(exporter_class, format='xlsx', **kwargs):
     export_to = os.path.join(EXPORT_ROOT, filename)
     with open(export_to, 'wb') as outfile:
         outfile.write(getattr(databook, format))
-
-    return True
+    rel_path = os.path.join(settings.MEDIA_URL, 'exports')
+    return os.path.join(rel_path, filename)

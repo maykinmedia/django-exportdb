@@ -12,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import FormView, View
 
 import rules
+from celery.result import AsyncResult
 
 from .exporter import get_export_models, Exporter
 from .tasks import export
@@ -65,19 +66,19 @@ class ExportView(ExportPermissionMixin, FormView):
         tenant = getattr(connection, 'tenant', None)
         # start actual export and render the template
         async_result = export.delay(self.get_exporter_class(), tenant=tenant)
-        self.request.session[EXPORTDB_EXPORT_KEY] = async_result
+        self.request.session[EXPORTDB_EXPORT_KEY] = async_result.id
         context = self.get_context_data(export_running=True)
         self.template_name = 'exportdb/in_progress.html'
         return self.render_to_response(context)
 
 
-class ExportPendingView(View):
+class ExportPendingView(ExportPermissionMixin, View):
 
     def json_response(self, data):
         return HttpResponse(json.dumps(data), content_type='application/json')
 
     def get(self, request, *args, **kwargs):
-        async_result = request.session.get(EXPORTDB_EXPORT_KEY)
+        async_result = AsyncResult(request.session.get(EXPORTDB_EXPORT_KEY))
         if not async_result:
             return self.json_response({'status': 'FAILURE', 'progress': 0})
 
@@ -96,5 +97,6 @@ class ExportPendingView(View):
         content = {
             'status': async_result.state,
             'progress': progress,
+            'file': async_result.result if async_result.ready() else None
         }
         return self.json_response(content)
