@@ -129,9 +129,6 @@ class Exporter(object):
             )[:31]  # maximum of 31 chars int title
             book.add_sheet(dataset)
 
-            # import time
-            # time.sleep(100)
-
             if task is not None:
                 num_done += resource.get_queryset().count()
                 progress = float(num_done) / total

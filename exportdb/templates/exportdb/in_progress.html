@@ -4,7 +4,17 @@
 <script src="{% static 'admin/js/jquery.min.js' %}" type="text/javascript"></script>
 <script src="{% static 'admin/js/jquery.init.js' %}" type="text/javascript"></script>
 <style type="text/css">
-
+#progress {
+    color: white;
+    background: #EEE;
+    padding: 3px;
+    text-align: center;
+}
+#progress-bar {
+    background: #7CA0C7 url({% static "admin/img/default-bg.gif" %}) top left repeat-x;
+    width: 0;
+    min-width: 3%;
+}
 </style>
 {% endblock %}
 
@@ -24,14 +34,13 @@
     </div>
 
     <div id="progress">
-
+        <div id="progress-bar"><span id="progress-value">0</span>%</div>
     </div>
 
-    {% comment %}
-    <div class="submit-row">
-        <input type="submit" value="{% trans "Confirm" %}" class="default" name="_save">
+
+    <div class="submit-row" style="display: none;">
+        <button><a href="#" id="download-link">{% trans "Download export file" %}</a></button>
     </div>
-    {% endcomment %}
 </div>
 
 
@@ -45,9 +54,12 @@
         $.getJSON(url, function(json) {
             console.log(json);
             if (json.status == 'PROGRESS') {
+                $('#progress-bar').width('' + json.progress + '%');
                 setTimeout(updateProgress, 1000);
             } else if (json.status == 'SUCCESS') {
-                console.log(json.file)
+                $('#progress-bar').width('100%');
+                $('#download-link').attr('href', json.file);
+                $('.submit-row').show();
             }
         });
     };
