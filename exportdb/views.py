@@ -1,21 +1,23 @@
-import mimetypes
-import os
+import json
 
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ImproperlyConfigured
-from django.utils.decorators import method_decorator
+from django.db import connection
+from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
-from django.views.generic import FormView
-
-from django.http import CompatibleStreamingHttpResponse
+from django.views.generic import FormView, View
 
 import rules
 
-from .exporter import get_export_models, get_resource_for_model, Exporter
-from .settings import EXPORT_ROOT
+from .exporter import get_export_models, Exporter
+from .tasks import export
+
+
+EXPORTDB_EXPORT_KEY = 'exportdb_export'
 
 
 class ExportPermissionMixin(object):
@@ -42,8 +44,8 @@ class ExportView(ExportPermissionMixin, FormView):
             messages.error(self.request, e.args[0])
         return []
 
-    def get_exporter(self, resources):
-        return self.exporter_class(resources)
+    def get_exporter_class(self):
+        return self.exporter_class
 
     def get_context_data(self, **kwargs):
         context = super(ExportView, self).get_context_data(**kwargs)
@@ -59,28 +61,40 @@ class ExportView(ExportPermissionMixin, FormView):
         return context
 
     def form_valid(self, form):
-        models = self.get_export_models()
-        resources = [get_resource_for_model(model) for model in models]
+        # multi-tenant support
+        tenant = getattr(connection, 'tenant', None)
+        # start actual export and render the template
+        async_result = export.delay(self.get_exporter_class(), tenant=tenant)
+        self.request.session[EXPORTDB_EXPORT_KEY] = async_result
+        context = self.get_context_data(export_running=True)
+        self.template_name = 'exportdb/in_progress.html'
+        return self.render_to_response(context)
 
-        format = 'xlsx'  # TODO: form
 
-        filename = u'export-{timestamp}.{ext}'.format(
-            timestamp=timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
-            ext=format
-        )
+class ExportPendingView(View):
 
-        exporter = self.get_exporter(resources)
-        databook = exporter.export()
+    def json_response(self, data):
+        return HttpResponse(json.dumps(data), content_type='application/json')
 
-        export_to = os.path.join(EXPORT_ROOT, filename)
-        with open(export_to, 'wb') as outfile:
-            outfile.write(getattr(databook, format))
+    def get(self, request, *args, **kwargs):
+        async_result = request.session.get(EXPORTDB_EXPORT_KEY)
+        if not async_result:
+            return self.json_response({'status': 'FAILURE', 'progress': 0})
 
-        content_type, encoding = mimetypes.guess_type(outfile.name)
-        content_type = content_type or 'application/octet-stream'
-        response = CompatibleStreamingHttpResponse(
-            open(outfile.name, 'rb'),
-            content_type='application/octet-stream'
-        )
-        response['Content-Disposition'] = u'attachment; filename={}'.format(filename)
-        return response
+        if async_result.state == 'PROGRESS':
+            try:
+                progress = async_result.info['progress']
+                if progress > 99:
+                    progress = 99
+            except:
+                progress = 100
+        elif async_result.ready():
+            progress = 100
+        else:
+            progress = 1
+
+        content = {
+            'status': async_result.state,
+            'progress': progress,
+        }
+        return self.json_response(content)

@@ -1,0 +1,38 @@
+{% extends "exportdb/base.html" %}{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module aligned">
+        <h2>{% trans "Export in progress" %}</h2>
+
+        <div class="form-row">
+            {% trans "The following object types are being exported" %}
+            <ul>
+                {% for model in models %}
+                    <li>{{ model }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div id="progress">
+    </div>
+
+    {% comment %}
+    <div class="submit-row">
+        <input type="submit" value="{% trans "Confirm" %}" class="default" name="_save">
+    </div>
+    {% endcomment %}
+</div>
+
+
+<script type="text/javascript">
+(function($, undefined) {
+    'use strict';
+
+    var url = '{% url 'exportdb_progress' %}';
+    debugger;
+})(django.jQuery);
+</script>
+
+{% endblock content %}

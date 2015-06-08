@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db.models import get_model
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import timezone
 
 from import_export import resources, fields
 from tablib import Databook
@@ -101,10 +102,27 @@ class Exporter(object):
     def __init__(self, resources):
         self.resources = resources
 
-    def export(self):
+    def export(self, task=None):
+        """
+        Export the resources to a file.
+
+        :param task: optional celery task. If given, the task state will be
+                     updated.
+        """
         book = Databook()
 
+        if task is not None:
+            total = sum([resource.get_queryset().count() for resource in self.resources])
+            started = timezone.now()
+            progress = 0
+            task.update_state(
+                state='PROGRESS',
+                meta={'total': total, 'started': started, 'progress': progress, 'model': None}
+            )
+
+        num_done = 0
         for resource in self.resources:
+            import bpdb; bpdb.set_trace()
             dataset = resource.export()  # takes optional queryset argument (select related)
             model = resource.Meta.model
             dataset.title = u'{name} ({app}.{model})'.format(
@@ -113,4 +131,12 @@ class Exporter(object):
                 model=model.__name__
             )[:31]  # maximum of 31 chars int title
             book.add_sheet(dataset)
+
+            if task is not None:
+                num_done += resource.get_queryset().count()
+                progress = float(num_done) / total
+                task.update_state(
+                    state='PROGRESS',
+                    meta={'total': total, 'started': started, 'progress': progress, 'model': dataset.title}
+                )
         return book
