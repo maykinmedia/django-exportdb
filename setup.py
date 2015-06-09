@@ -30,6 +30,9 @@ setup(
 
     # Packaging
     packages=find_packages(exclude=('tests', 'tests.*')),
+    package_data={
+        'django-exportdb': ['templates/exportdb/*']
+    },
     install_requires=requirements,
     include_package_data=True,
     extras_require={
