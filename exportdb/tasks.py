@@ -25,6 +25,9 @@ def export(exporter_class, format='xlsx', **kwargs):
         from django.db import connection
         connection.set_tenant(tenant)
 
+        export_root = EXPORT_ROOT % tenant.schema_name
+        export_media_url = EXPORT_MEDIA_URL % tenant.schema_name
+
     filename = u'export-{timestamp}.{ext}'.format(
         timestamp=timezone.now().strftime('%Y-%m-%d_%H%M%S'),
         ext=format
@@ -36,9 +39,9 @@ def export(exporter_class, format='xlsx', **kwargs):
 
     logger.info('Exporting resources: %s' % resources)
     databook = exporter.export(task=current_task)
-    export_to = os.path.join(EXPORT_ROOT, filename)
-    if not os.path.exists(EXPORT_ROOT):
-        os.makedirs(EXPORT_ROOT)
+    export_to = os.path.join(export_root, filename)
+    if not os.path.exists(export_root):
+        os.makedirs(export_root)
     with open(export_to, 'wb') as outfile:
         outfile.write(getattr(databook, format))
-    return posixpath.join(EXPORT_MEDIA_URL, filename)
+    return posixpath.join(export_media_url, filename)
