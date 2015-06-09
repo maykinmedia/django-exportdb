@@ -1,13 +1,13 @@
 import logging
 import os
+import posixpath
 
-from django.conf import settings
 from django.utils import timezone
 
 from celery import shared_task, current_task
 
 from .exporter import get_export_models, get_resource_for_model
-from .settings import EXPORT_ROOT
+from .settings import EXPORT_ROOT, EXPORT_MEDIA_URL
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def export(exporter_class, format='xlsx', **kwargs):
         connection.set_tenant(tenant)
 
     filename = u'export-{timestamp}.{ext}'.format(
-        timestamp=timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+        timestamp=timezone.now().strftime('%Y-%m-%d_%H%M%S'),
         ext=format
     )
 
@@ -37,7 +37,8 @@ def export(exporter_class, format='xlsx', **kwargs):
     logger.info('Exporting resources: %s' % resources)
     databook = exporter.export(task=current_task)
     export_to = os.path.join(EXPORT_ROOT, filename)
+    if not os.path.exists(EXPORT_ROOT):
+        os.makedirs(EXPORT_ROOT)
     with open(export_to, 'wb') as outfile:
         outfile.write(getattr(databook, format))
-    rel_path = os.path.join(settings.MEDIA_URL, 'exports')
-    return os.path.join(rel_path, filename)
+    return posixpath.join(EXPORT_MEDIA_URL, filename)

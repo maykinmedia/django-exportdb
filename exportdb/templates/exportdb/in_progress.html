@@ -52,7 +52,6 @@
 
     var updateProgress = function() {
         $.getJSON(url, function(json) {
-            console.log(json);
             if (json.status == 'PROGRESS') {
                 var pg = parseInt(json.progress * 100, 10);
                 $('#progress-value').text(pg);

@@ -26,6 +26,9 @@ class ExportModelResource(resources.ModelResource):
 
     num_done = 0
 
+    def get_queryset(self):
+        return super(ExportModelResource, self).get_queryset()[:100]
+
     def export(self, queryset=None, task_meta=None):
         if queryset is None:
             queryset = self.get_queryset()
