@@ -26,7 +26,6 @@ def export(exporter_class, format='xlsx', **kwargs):
         connection.set_tenant(tenant)
 
         export_root = EXPORT_ROOT % tenant.schema_name
-        export_media_url = EXPORT_MEDIA_URL % tenant.schema_name
 
     filename = u'export-{timestamp}.{ext}'.format(
         timestamp=timezone.now().strftime('%Y-%m-%d_%H%M%S'),
@@ -44,4 +43,4 @@ def export(exporter_class, format='xlsx', **kwargs):
         os.makedirs(export_root)
     with open(export_to, 'wb') as outfile:
         outfile.write(getattr(databook, format))
-    return posixpath.join(export_media_url, filename)
+    return posixpath.join(EXPORT_MEDIA_URL, filename)
