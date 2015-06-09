@@ -85,12 +85,12 @@ class ExportPendingView(ExportPermissionMixin, View):
         if async_result.state == 'PROGRESS':
             try:
                 progress = async_result.info['progress']
-                if progress > 99:
-                    progress = 99
+                if progress > 0.99:
+                    progress = 0.99
             except:
-                progress = 100
+                progress = 0.01
         elif async_result.ready():
-            progress = 100
+            progress = 1
         else:
             progress = 1
 

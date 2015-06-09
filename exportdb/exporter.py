@@ -1,9 +1,12 @@
+import logging
+
 from django.contrib import admin
 from django.db.models import get_model
+from django.db.models.query import QuerySet
 from django.core.exceptions import ImproperlyConfigured
 
 from import_export import resources, fields
-from tablib import Databook
+from tablib import Databook, Dataset
 
 try:  # 1.7 and higher
     from django.apps.apps import get_models
@@ -11,6 +14,52 @@ except ImportError:
     from django.db.models import get_models
 
 from .settings import EXPORT_CONF
+
+
+logger = logging.getLogger(__name__)
+
+
+class ExportModelResource(resources.ModelResource):
+    """
+    Resource class that ties in better with Celery and progress reporting.
+    """
+
+    num_done = 0
+
+    def export(self, queryset=None, task_meta=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+        headers = self.get_export_headers()
+        data = Dataset(headers=headers)
+
+        if isinstance(queryset, QuerySet):
+            # Iterate without the queryset cache, to avoid wasting memory when
+            # exporting large datasets.
+            iterable = queryset.iterator()
+        else:
+            iterable = queryset
+
+        if task_meta is not None:  # initialize the total amount accross multiple resources
+            self.num_done = task_meta['done']
+
+        for obj in iterable:
+            data.append(self.export_resource(obj))
+
+            if task_meta is not None:
+                self._update_task_state(task_meta)
+
+            logger.debug('Num done: %d' % self.num_done)
+
+        return data
+
+    def _update_task_state(self, task_meta):
+        total = task_meta['total']
+        self.num_done += 1
+        progress = float(self.num_done) / total
+        task_meta['task'].update_state(
+            state='PROGRESS',
+            meta={'progress': progress, 'model': self.__class__.__name__}
+        )
 
 
 def modelresource_factory(model, **meta_kwargs):
@@ -44,7 +93,7 @@ def modelresource_factory(model, **meta_kwargs):
         class_attrs[field] = fields.Field(attribute=field, column_name=label, readonly=True)
 
     metaclass = resources.ModelDeclarativeMetaclass
-    return metaclass(class_name, (resources.ModelResource,), class_attrs)
+    return metaclass(class_name, (ExportModelResource,), class_attrs)
 
 
 def get_export_models(admin_only=False):
@@ -93,7 +142,7 @@ def get_resource_for_model(model):
         if fields is not None:
             # use own factory
             return modelresource_factory(model, fields=fields)()
-    return resources.modelresource_factory(model)()
+    return resources.modelresource_factory(model, resource_class=ExportModelResource)()
 
 
 class Exporter(object):
@@ -110,30 +159,21 @@ class Exporter(object):
         """
         book = Databook()
 
+        export_kwargs = {}
         if task is not None:
             total = sum([resource.get_queryset().count() for resource in self.resources])
-            progress = 0
-            task.update_state(
-                state='PROGRESS',
-                meta={'progress': progress, 'model': None}
-            )
+            export_kwargs['task_meta'] = {'task': task, 'total': total, 'done': 0}
 
-        num_done = 0
         for resource in self.resources:
             model = resource.Meta.model
-            dataset = resource.export()  # takes optional queryset argument (select related)
+            logger.debug('Export kwargs: %s' % export_kwargs)
+            dataset = resource.export(**export_kwargs)  # takes optional queryset argument (select related)
+            if task is not None:
+                export_kwargs['task_meta']['done'] += dataset.height
             dataset.title = u'{name} ({app}.{model})'.format(
                 name=model._meta.verbose_name_plural,
                 app=model._meta.app_label,
                 model=model.__name__
             )[:31]  # maximum of 31 chars int title
             book.add_sheet(dataset)
-
-            if task is not None:
-                num_done += resource.get_queryset().count()
-                progress = float(num_done) / total
-                task.update_state(
-                    state='PROGRESS',
-                    meta={'progress': progress, 'model': dataset.title}
-                )
         return book
