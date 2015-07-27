@@ -21,6 +21,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+/cover
 
 # Mac stuff and sqlite files
 .DS\_Store
