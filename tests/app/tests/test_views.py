@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 try:
     from django.test import override_settings
