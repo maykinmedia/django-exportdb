@@ -13,6 +13,7 @@ def read_file(name):
 readme = read_file('README.rst')
 requirements = [
     'Django>=1.6',
+    'django-appconf>=1.0.1',
     'django-import-export==0.2.7',
     'celery==3.1.17',
     'django-celery==3.0.17',

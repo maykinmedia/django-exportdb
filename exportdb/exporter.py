@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib import admin
 from django.db.models import get_model
 from django.db.models.query import QuerySet
@@ -12,8 +13,6 @@ try:  # 1.7 and higher
     from django.apps.apps import get_models
 except ImportError:
     from django.db.models import get_models
-
-from .settings import EXPORT_CONF
 
 
 logger = logging.getLogger(__name__)
@@ -100,7 +99,7 @@ def get_export_models(admin_only=False):
     """
     Gets a list of models that can be exported.
     """
-    export_conf = EXPORT_CONF.get('models')
+    export_conf = settings.EXPORTDB_EXPORT_CONF.get('models')
     if export_conf is None:
         if admin_only:
             if admin.site._registry == {}:
@@ -136,7 +135,7 @@ def get_resource_for_model(model):
         app_label=model._meta.app_label,
         name=model.__name__
     )
-    export_conf = EXPORT_CONF.get('models')
+    export_conf = settings.EXPORTDB_EXPORT_CONF.get('models')
     if export_conf is not None:
         fields = export_conf.get(model_name)
         if fields is not None:
