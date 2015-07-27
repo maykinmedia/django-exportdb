@@ -1,6 +1,6 @@
 import json
 
-from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ImproperlyConfigured
@@ -13,6 +13,7 @@ from django.views.generic import FormView, View
 import rules
 from celery.result import AsyncResult
 
+from .compat import import_string
 from .exporter import get_export_models, Exporter
 from .tasks import export
 
@@ -32,9 +33,20 @@ class ExportPermissionMixin(object):
 
 
 class ExportView(ExportPermissionMixin, FormView):
-    form_class = forms.Form
+    form_class = None
     template_name = 'exportdb/confirm.html'
     exporter_class = Exporter
+
+    def get_form_class(self):
+        """
+        Return the form class to use for the confirmation form.
+
+        In the method instead of the attribute, since it's not guaranteed that
+        the appconf is loaded in Django versions < 1.7.
+        """
+        if self.form_class is None:
+            self.form_class = import_string(settings.EXPORTDB_CONFIRM_FORM)
+        return self.form_class
 
     def get_export_models(self, **kwargs):
         kwargs.setdefault('admin_only', False)
