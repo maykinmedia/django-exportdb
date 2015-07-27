@@ -27,7 +27,7 @@ class ViewTests(TestCase):
     def test_confirm_page(self):
         response = self.client.get(self.confirm_url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['models'], [
+        self.assertEqual(set(response.context['models']), set([
             _('session (sessions.Session)'),
             _('log entry (admin.LogEntry)'),
             _('author (app.Author)'),
@@ -38,7 +38,7 @@ class ViewTests(TestCase):
             _('group (auth.Group)'),
             _('user (auth.User)'),
             _('content type (contenttypes.ContentType)')
-        ])
+        ]))
         self.assertIsInstance(response.context['form'], forms.Form)
 
     @override_settings(EXPORTDB_CONFIRM_FORM='tests.app.tests.test_views.ExportForm')
