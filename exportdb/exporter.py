@@ -9,6 +9,8 @@ from django.core.exceptions import ImproperlyConfigured
 from import_export import resources, fields
 from tablib import Databook, Dataset
 
+from .compat import import_string
+
 try:  # 1.7 and higher
     from django.apps.apps import get_models
 except ImportError:
@@ -61,7 +63,7 @@ class ExportModelResource(resources.ModelResource):
         )
 
 
-def modelresource_factory(model, **meta_kwargs):
+def modelresource_factory(model, resource_class=ExportModelResource, **meta_kwargs):
     attrs = {'model': model}
 
     field_names = []
@@ -92,7 +94,7 @@ def modelresource_factory(model, **meta_kwargs):
         class_attrs[field] = fields.Field(attribute=field, column_name=label, readonly=True)
 
     metaclass = resources.ModelDeclarativeMetaclass
-    return metaclass(class_name, (ExportModelResource,), class_attrs)
+    return metaclass(class_name, (resource_class,), class_attrs)
 
 
 def get_export_models(admin_only=False):
@@ -135,13 +137,21 @@ def get_resource_for_model(model, **kwargs):
         app_label=model._meta.app_label,
         name=model.__name__
     )
+    resource_class = ExportModelResource
     export_conf = settings.EXPORTDB_EXPORT_CONF.get('models')
     if export_conf is not None:
-        fields = export_conf.get(model_name)
-        if fields is not None:
-            # use own factory
-            return modelresource_factory(model, fields=fields)()
-    return resources.modelresource_factory(model, resource_class=ExportModelResource)()
+        model_conf = export_conf.get(model_name)
+        if model_conf is not None:
+            # support custom resource classes
+            if 'resource_class' in model_conf:
+                resource_class = import_string(model_conf['resource_class'])
+
+            # specify fields to be exported
+            fields = model_conf.get('fields')
+            if fields is not None:
+                # use own factory
+                return modelresource_factory(model, resource_class=resource_class, fields=fields)()
+    return resources.modelresource_factory(model, resource_class=resource_class)()
 
 
 class Exporter(object):

@@ -4,10 +4,15 @@ from django.test import TestCase
 
 from import_export.resources import ModelResource
 
-from exportdb.exporter import get_export_models, get_resource_for_model, Exporter
+from exportdb.exporter import get_export_models, get_resource_for_model, Exporter, ExportModelResource
 
 from ..models import Author, Book, Category
 from .factories import AuthorFactory, BookFactory, CategoryFactory
+
+try:
+    from django.test import override_settings
+except ImportError:
+    from django.test.utils import override_settings
 
 
 class ExporterTests(TestCase):
@@ -78,3 +83,36 @@ class ExporterTests(TestCase):
 
         self.assertEqual(len(category_sheet), 3)
         self.assertEqual(len(category_sheet[0]), 2)  # id, name
+
+
+EXPORT_CONF = {
+    'models': {
+        'auth.User': {
+            'fields': ('username',),
+            'resource_class': 'app.tests.utils.UserResource'
+        },
+        'auth.Group': {
+            'resource_class': 'app.tests.utils.GroupResource'
+        },
+        'auth.Permission': {
+            'fields': ('name',)
+        }
+    }
+}
+
+
+@override_settings(EXPORTDB_EXPORT_CONF=EXPORT_CONF)
+class ExportResourcesTests(TestCase):
+
+    def test_use_custom_resources(self):
+        from django.contrib.auth.models import User, Group, Permission
+        from .utils import UserResource, GroupResource
+
+        user_resource = get_resource_for_model(User)
+        self.assertTrue(issubclass(user_resource.__class__, UserResource))
+
+        group_resource = get_resource_for_model(Group)
+        self.assertTrue(issubclass(group_resource.__class__, GroupResource))
+
+        permission_resource = get_resource_for_model(Permission)
+        self.assertTrue(issubclass(permission_resource.__class__, ExportModelResource))
