@@ -13,12 +13,14 @@ def read_file(name):
 readme = read_file('README.rst')
 requirements = [
     'Django>=1.6',
+    'django-appconf>=1.0.1',
     'django-import-export==0.2.7',
     'celery==3.1.17',
     'django-celery==3.0.17',
     'rules==0.4',
 ]
 test_requirements = [
+    'mock>=1.0.1',
     'factory-boy==2.5.2',
     'coverage==3.7.1'
 ]

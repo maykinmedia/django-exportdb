@@ -1,6 +1,8 @@
 import logging
 
+from django.conf import settings
 from django.contrib import admin
+from django.db import connection
 from django.db.models import get_model
 from django.db.models.query import QuerySet
 from django.core.exceptions import ImproperlyConfigured
@@ -8,12 +10,12 @@ from django.core.exceptions import ImproperlyConfigured
 from import_export import resources, fields
 from tablib import Databook, Dataset
 
+from .compat import import_string
+
 try:  # 1.7 and higher
     from django.apps.apps import get_models
 except ImportError:
     from django.db.models import get_models
-
-from .settings import EXPORT_CONF
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,9 @@ class ExportModelResource(resources.ModelResource):
     """
 
     num_done = 0
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs  # by default, silently accept all kwargs
 
     def export(self, queryset=None, task_meta=None):
         if queryset is None:
@@ -62,7 +67,7 @@ class ExportModelResource(resources.ModelResource):
         )
 
 
-def modelresource_factory(model, **meta_kwargs):
+def modelresource_factory(model, resource_class=ExportModelResource, **meta_kwargs):
     attrs = {'model': model}
 
     field_names = []
@@ -93,14 +98,14 @@ def modelresource_factory(model, **meta_kwargs):
         class_attrs[field] = fields.Field(attribute=field, column_name=label, readonly=True)
 
     metaclass = resources.ModelDeclarativeMetaclass
-    return metaclass(class_name, (ExportModelResource,), class_attrs)
+    return metaclass(class_name, (resource_class,), class_attrs)
 
 
 def get_export_models(admin_only=False):
     """
     Gets a list of models that can be exported.
     """
-    export_conf = EXPORT_CONF.get('models')
+    export_conf = settings.EXPORTDB_EXPORT_CONF.get('models')
     if export_conf is None:
         if admin_only:
             if admin.site._registry == {}:
@@ -126,7 +131,7 @@ def get_export_models(admin_only=False):
         return models
 
 
-def get_resource_for_model(model):
+def get_resource_for_model(model, **kwargs):
     """
     Finds or generates the resource to use for :param:`model`.
     """
@@ -136,13 +141,21 @@ def get_resource_for_model(model):
         app_label=model._meta.app_label,
         name=model.__name__
     )
-    export_conf = EXPORT_CONF.get('models')
+    resource_class = ExportModelResource
+    export_conf = settings.EXPORTDB_EXPORT_CONF.get('models')
     if export_conf is not None:
-        fields = export_conf.get(model_name)
-        if fields is not None:
-            # use own factory
-            return modelresource_factory(model, fields=fields)()
-    return resources.modelresource_factory(model, resource_class=ExportModelResource)()
+        model_conf = export_conf.get(model_name)
+        if model_conf is not None:
+            # support custom resource classes
+            if 'resource_class' in model_conf:
+                resource_class = import_string(model_conf['resource_class'])
+
+            # specify fields to be exported
+            fields = model_conf.get('fields')
+            if fields is not None:
+                # use own factory
+                return modelresource_factory(model, resource_class=resource_class, fields=fields)(**kwargs)
+    return resources.modelresource_factory(model, resource_class=resource_class)(**kwargs)
 
 
 class Exporter(object):
@@ -164,10 +177,19 @@ class Exporter(object):
             total = sum([resource.get_queryset().count() for resource in self.resources])
             export_kwargs['task_meta'] = {'task': task, 'total': total, 'done': 0}
 
+        num_queries_start = len(connection.queries)
+
         for resource in self.resources:
             model = resource.Meta.model
             logger.debug('Export kwargs: %s' % export_kwargs)
             dataset = resource.export(**export_kwargs)  # takes optional queryset argument (select related)
+
+            len_queries = len(connection.queries)
+            queries = len_queries - num_queries_start
+            logger.info('Number of objects: %d' % resource.get_queryset().count())
+            logger.info('Executed %d queries' % queries)
+            num_queries_start = len_queries
+
             if task is not None:
                 export_kwargs['task_meta']['done'] += dataset.height
             dataset.title = u'{name} ({app}.{model})'.format(

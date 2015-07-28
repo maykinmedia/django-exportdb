@@ -2,6 +2,9 @@ import os
 import sys
 
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+
 def runtests():
     from django.conf import settings
     settings.configure(
@@ -21,6 +24,8 @@ def runtests():
         DEBUG=True,
         STATIC_URL='/static/',
         SECRET_KEY='&t=qu_de!+ih0gq9a+v3bjd^f@ulb7ioy_!o=gi^k12aebt7+i',
+
+        MEDIA_ROOT=os.path.join(BASE_DIR, 'test_media'),
 
         MIDDLEWARE_CLASSES=(
             'django.contrib.sessions.middleware.SessionMiddleware',

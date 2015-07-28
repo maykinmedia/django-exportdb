@@ -3,6 +3,16 @@ Django Export DB
 
 Export the entire database to an Excel workbook with a sheet per model.
 
+.. image:: https://travis-ci.org/maykinmedia/django-exportdb.svg?branch=master
+    :target: https://travis-ci.org/maykinmedia/django-exportdb
+
+
+.. image:: https://coveralls.io/repos/maykinmedia/django-exportdb/badge.svg
+  :target: https://coveralls.io/r/maykinmedia/django-exportdb
+
+.. image:: https://img.shields.io/pypi/v/django-exportdb.svg
+  :target: https://pypi.python.org/pypi/django-exportdb
+
 Installation
 ------------
 
