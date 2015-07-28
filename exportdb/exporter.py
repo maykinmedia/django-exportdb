@@ -27,6 +27,9 @@ class ExportModelResource(resources.ModelResource):
 
     num_done = 0
 
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs  # by default, silently accept all kwargs
+
     def export(self, queryset=None, task_meta=None):
         if queryset is None:
             queryset = self.get_queryset()
@@ -150,8 +153,8 @@ def get_resource_for_model(model, **kwargs):
             fields = model_conf.get('fields')
             if fields is not None:
                 # use own factory
-                return modelresource_factory(model, resource_class=resource_class, fields=fields)()
-    return resources.modelresource_factory(model, resource_class=resource_class)()
+                return modelresource_factory(model, resource_class=resource_class, fields=fields)(**kwargs)
+    return resources.modelresource_factory(model, resource_class=resource_class)(**kwargs)
 
 
 class Exporter(object):

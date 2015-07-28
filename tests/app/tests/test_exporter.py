@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.contrib.auth.models import User, Group, Permission
 from django.test import TestCase
 
 from import_export.resources import ModelResource
@@ -8,6 +9,7 @@ from exportdb.exporter import get_export_models, get_resource_for_model, Exporte
 
 from ..models import Author, Book, Category
 from .factories import AuthorFactory, BookFactory, CategoryFactory
+from .utils import UserResource, GroupResource
 
 try:
     from django.test import override_settings
@@ -105,9 +107,6 @@ EXPORT_CONF = {
 class ExportResourcesTests(TestCase):
 
     def test_use_custom_resources(self):
-        from django.contrib.auth.models import User, Group, Permission
-        from .utils import UserResource, GroupResource
-
         user_resource = get_resource_for_model(User)
         self.assertTrue(issubclass(user_resource.__class__, UserResource))
 
@@ -116,3 +115,8 @@ class ExportResourcesTests(TestCase):
 
         permission_resource = get_resource_for_model(Permission)
         self.assertTrue(issubclass(permission_resource.__class__, ExportModelResource))
+
+    def test_pass_kwargs(self):
+        kwargs = {'foo': 'bar'}
+        user_resource = get_resource_for_model(User, **kwargs)
+        self.assertEqual(user_resource.foo, 'bar')
