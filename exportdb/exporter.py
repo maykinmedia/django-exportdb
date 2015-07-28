@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin
+from django.db import connection
 from django.db.models import get_model
 from django.db.models.query import QuerySet
 from django.core.exceptions import ImproperlyConfigured
@@ -176,10 +177,19 @@ class Exporter(object):
             total = sum([resource.get_queryset().count() for resource in self.resources])
             export_kwargs['task_meta'] = {'task': task, 'total': total, 'done': 0}
 
+        num_queries_start = len(connection.queries)
+
         for resource in self.resources:
             model = resource.Meta.model
             logger.debug('Export kwargs: %s' % export_kwargs)
             dataset = resource.export(**export_kwargs)  # takes optional queryset argument (select related)
+
+            len_queries = len(connection.queries)
+            queries = len_queries - num_queries_start
+            logger.info('Number of objects: %d' % resource.get_queryset().count())
+            logger.info('Executed %d queries' % queries)
+            num_queries_start = len_queries
+
             if task is not None:
                 export_kwargs['task_meta']['done'] += dataset.height
             dataset.title = u'{name} ({app}.{model})'.format(
