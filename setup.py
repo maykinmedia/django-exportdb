@@ -20,6 +20,7 @@ requirements = [
     'rules==0.4',
 ]
 test_requirements = [
+    'mock>=1.0.1',
     'factory-boy==2.5.2',
     'coverage==3.7.1'
 ]

@@ -125,7 +125,7 @@ def get_export_models(admin_only=False):
         return models
 
 
-def get_resource_for_model(model):
+def get_resource_for_model(model, **kwargs):
     """
     Finds or generates the resource to use for :param:`model`.
     """

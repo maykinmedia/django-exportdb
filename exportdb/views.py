@@ -76,7 +76,7 @@ class ExportView(ExportPermissionMixin, FormView):
         # multi-tenant support
         tenant = getattr(connection, 'tenant', None)
         # start actual export and render the template
-        async_result = export.delay(self.get_exporter_class(), tenant=tenant)
+        async_result = export.delay(self.get_exporter_class(), tenant=tenant, **form.cleaned_data)
         self.request.session[EXPORTDB_EXPORT_KEY] = async_result.id
         context = self.get_context_data(export_running=True)
         self.template_name = 'exportdb/in_progress.html'

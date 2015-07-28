@@ -19,13 +19,15 @@ def export(exporter_class, format='xlsx', **kwargs):
 
     Support for django-tenant-schemas is built in.
     """
-    tenant = kwargs.get('tenant')
+    tenant = kwargs.pop('tenant', None)
     if tenant is not None:
         logger.debug('Settings tenant to %s' % tenant)
         from django.db import connection
         connection.set_tenant(tenant)
 
         export_root = settings.EXPORTDB_EXPORT_ROOT % tenant.schema_name
+    else:
+        export_root = settings.EXPORTDB_EXPORT_ROOT
 
     filename = u'export-{timestamp}.{ext}'.format(
         timestamp=timezone.now().strftime('%Y-%m-%d_%H%M%S'),
@@ -33,7 +35,7 @@ def export(exporter_class, format='xlsx', **kwargs):
     )
 
     models = get_export_models()
-    resources = [get_resource_for_model(model) for model in models]
+    resources = [get_resource_for_model(model, **kwargs) for model in models]
     exporter = exporter_class(resources)
 
     logger.info('Exporting resources: %s' % resources)

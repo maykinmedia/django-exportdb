@@ -1,10 +1,15 @@
 from __future__ import unicode_literals
 
+import mock
+from datetime import date
+
 from django import forms
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.translation import ugettext as _
+
+from exportdb.exporter import Exporter
 
 try:
     from django.test import override_settings
@@ -47,3 +52,25 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['form'].__class__.__name__, 'ExportForm')
         self.assertContains(response, 'from date', count=1)
+
+    @override_settings(EXPORTDB_CONFIRM_FORM='tests.app.tests.test_views.ExportForm', CELERY_ALWAYS_EAGER=True)
+    def test_form_data_passed_to_exporter(self):
+        """
+        Test that form.cleaned_data is passed to the exporter and exporter resources
+        """
+        class AsyncResult(object):
+            id = 'foo'
+
+        def post_confirm():
+            response = self.client.post(self.confirm_url, {'from_date': date.today()})
+            self.assertEqual(response.status_code, 200)
+            return response
+
+        with mock.patch('exportdb.views.export.delay') as mocked_export:
+            mocked_export.return_value = AsyncResult()
+            post_confirm()
+
+            self.assertEqual(mocked_export.call_count, 1)
+            self.assertEqual(mocked_export.call_args, mock.call(
+                Exporter, tenant=None, from_date=date.today()
+            ))
