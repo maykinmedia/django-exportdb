@@ -51,17 +51,22 @@
     var url = '{% url 'exportdb_progress' %}';
 
     var updateProgress = function() {
-        $.getJSON(url, function(json) {
-            if (json.status == 'PROGRESS') {
-                var pg = parseInt(json.progress * 100, 10);
-                $('#progress-value').text(pg);
-                $('#progress-bar').width('' + pg + '%');
-                setTimeout(updateProgress, 1000);
-            } else if (json.status == 'SUCCESS') {
-                $('#progress-bar').width('100%');
-                $('#progress-value').text('100');
-                $('#download-link').attr('href', json.file);
-                $('.submit-row').show();
+        $.ajax({
+            cache: false,
+            url: url,
+            dataType: "json",        
+            success: function(json) {
+                if (json.status == 'PROGRESS') {
+                    var pg = parseInt(json.progress * 100, 10);
+                    $('#progress-value').text(pg);
+                    $('#progress-bar').width('' + pg + '%');
+                    setTimeout(updateProgress, 1000);
+                } else if (json.status == 'SUCCESS') {
+                    $('#progress-bar').width('100%');
+                    $('#progress-value').text('100');
+                    $('#download-link').attr('href', json.file);
+                    $('.submit-row').show();
+                }
             }
         });
     };
