@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.models import User, Group, Permission
 from django.test import TestCase
+from django.utils.translation import ugettext_lazy as _
 
 from import_export.resources import ModelResource
 
@@ -91,13 +92,23 @@ EXPORT_CONF = {
     'models': {
         'auth.User': {
             'fields': ('username',),
-            'resource_class': 'app.tests.utils.UserResource'
+            'resource_class': 'app.tests.utils.UserResource',
+            'title': _('Custom title'),
         },
         'auth.Group': {
             'resource_class': 'app.tests.utils.GroupResource'
         },
         'auth.Permission': {
             'fields': ('name',)
+        }
+    }
+}
+
+
+EXPORT_CONF_AUTHORS = {
+    'models': {
+        'app.Author': {
+            'title': _('Author'),
         }
     }
 }
@@ -120,3 +131,23 @@ class ExportResourcesTests(TestCase):
         kwargs = {'foo': 'bar'}
         user_resource = get_resource_for_model(User, **kwargs)
         self.assertEqual(user_resource.foo, 'bar')
+
+    def test_custom_dataset_title(self):
+        user_resource = get_resource_for_model(User)
+        self.assertEqual(user_resource.title, 'Custom title')
+
+        group_resource = get_resource_for_model(Group)
+        self.assertIsNone(group_resource.title)
+
+    @override_settings(EXPORTDB_EXPORT_CONF=EXPORT_CONF_AUTHORS)
+    def test_exporter_custom_title(self):
+        AuthorFactory.create_batch(3)
+
+        exporter = Exporter([get_resource_for_model(Author)])
+        book = exporter.export()
+
+        sheets = book.sheets()
+        self.assertEqual(len(sheets), 1)
+
+        sheet = sheets[0]
+        self.assertEqual(sheet.title, 'Author')

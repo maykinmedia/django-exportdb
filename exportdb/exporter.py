@@ -6,6 +6,7 @@ from django.db import connection
 from django.db.models import get_model
 from django.db.models.query import QuerySet
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.encoding import force_text
 
 from import_export import resources, fields
 from tablib import Databook, Dataset
@@ -27,8 +28,12 @@ class ExportModelResource(resources.ModelResource):
     """
 
     num_done = 0
+    title = None
 
     def __init__(self, **kwargs):
+        if 'title' in kwargs:
+            self.title = kwargs.pop('title')
+
         self.kwargs = kwargs  # by default, silently accept all kwargs
 
     def export(self, queryset=None, task_meta=None):
@@ -146,6 +151,10 @@ def get_resource_for_model(model, **kwargs):
     if export_conf is not None:
         model_conf = export_conf.get(model_name)
         if model_conf is not None:
+
+            # support custom resource titles
+            kwargs['title'] = model_conf.get('title')
+
             # support custom resource classes
             if 'resource_class' in model_conf:
                 resource_class = import_string(model_conf['resource_class'])
@@ -192,10 +201,15 @@ class Exporter(object):
 
             if task is not None:
                 export_kwargs['task_meta']['done'] += dataset.height
-            dataset.title = u'{name} ({app}.{model})'.format(
-                name=model._meta.verbose_name_plural,
-                app=model._meta.app_label,
-                model=model.__name__
-            )[:31]  # maximum of 31 chars int title
+
+            if resource.title is not None:
+                dataset.title = force_text(resource.title)[:31]  # maximum of 31 chars int title
+            else:
+                dataset.title = u'{name} ({app}.{model})'.format(
+                    name=model._meta.verbose_name_plural,
+                    app=model._meta.app_label,
+                    model=model.__name__
+                )[:31]  # maximum of 31 chars int title
+
             book.add_sheet(dataset)
         return book
