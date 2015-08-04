@@ -26,3 +26,34 @@ Add
 
 to your urls.py, make sure that it comes before url(r'^admin/', ...) if you hook
 it into the admin.
+
+Configuration
+-------------
+
+EXPORTDB_EXPORT_CONF
+    Configures what models and fields are exported. Example::
+
+         EXPORT_CONF = {
+            'models': {
+                'auth.User': {
+                    'fields': ('username',),
+                    'resource_class': 'app.tests.utils.UserResource'
+                },
+                'auth.Group': {
+                    'resource_class': 'app.tests.utils.GroupResource'
+                },
+                'auth.Permission': {
+                    'fields': ('name',)
+                }
+            }
+        }
+EXPORTDB_CONFIRM_FORM
+    Form shown to confirm the export
+EXPORTDB_EXPORT_ROOT
+    The filesystem path where the exports are stored 
+EXPORTDB_PERMISSION
+    Who can access the export. By default only superusers have access.
+    
+    To allow all `staff` users to use the export add the following to your settings::
+
+        EXPORTDB_PERMISSION = rules.is_staff
