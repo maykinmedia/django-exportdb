@@ -96,7 +96,8 @@ def modelresource_factory(model, resource_class=ExportModelResource, **meta_kwar
 
     all_fields = model._meta.get_all_field_names()
     for field in field_names:
-        if field in all_fields:  # it's a real field, the meta class deals with this
+        # it's a real field, the meta class deals with this
+        if field in all_fields and field not in field_labels:
             continue
         # explicitly add the field
         label = field_labels.get(field, field)
