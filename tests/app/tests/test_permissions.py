@@ -42,4 +42,4 @@ class PermissionTests(TestCase):
             self.assertTrue(
                 rules.test_rule('exportdb.can_export', self.normal_user)
             )
-            permission_mock.assertCalledWith(self.normal_user)
+            permission_mock.assert_called_with(self.normal_user)
