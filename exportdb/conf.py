@@ -3,6 +3,8 @@ import posixpath
 
 from django.conf import settings
 
+import rules
+
 from appconf import AppConf
 
 
@@ -16,3 +18,6 @@ class ExportDBConf(AppConf):
 
     # form used in admin pview to confirm export
     CONFIRM_FORM = 'django.forms.Form'
+
+    # Who can perform the export
+    PERMISSION = rules.is_superuser

@@ -1,10 +1,10 @@
 import rules
-# TODO: this should be parametrized via settings
+from django.conf import settings
 
 
 @rules.predicate
-def is_superuser(user):
-    return user.is_superuser
+def permission(*args, **kwargs):
+    return settings.EXPORTDB_PERMISSION(*args, **kwargs)
 
 
-rules.add_rule('exportdb.can_export', is_superuser)
+rules.add_rule('exportdb.can_export', permission)
