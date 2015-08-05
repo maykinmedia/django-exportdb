@@ -1,5 +1,6 @@
-import rules
 from django.conf import settings
+
+import rules
 
 
 @rules.predicate

@@ -4,7 +4,6 @@ import posixpath
 from django.conf import settings
 
 import rules
-
 from appconf import AppConf
 
 
