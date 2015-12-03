@@ -15,7 +15,7 @@ class ExportDBConf(AppConf):
     EXPORT_MEDIA_URL = posixpath.join(settings.MEDIA_URL, EXPORT_SUBDIR)
     EXPORT_CONF = {}
 
-    # form used in admin pview to confirm export
+    # form used in admin view to confirm export
     CONFIRM_FORM = 'django.forms.Form'
 
     # Who can perform the export
