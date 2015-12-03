@@ -5,9 +5,19 @@ script:
   - tox
 after_success:
   - coveralls
+  - codecov
 env:
-  - TOXENV=py27-1.6
-  - TOXENV=py27-1.7
-  - TOXENV=py27-1.8
-  - TOXENV=py34-1.7
-  - TOXENV=py34-1.8
+  - TOXENV=py27-django1.6
+  - TOXENV=py27-django1.7
+  - TOXENV=py27-django1.8
+  - TOXENV=py27-django1.9
+
+  - TOXENV=py34-django1.6
+  - TOXENV=py34-django1.7
+  - TOXENV=py34-django1.8
+  - TOXENV=py34-django1.9
+
+  - TOXENV=py35-django1.6
+  - TOXENV=py35-django1.7
+  - TOXENV=py35-django1.8
+  - TOXENV=py35-django1.9
