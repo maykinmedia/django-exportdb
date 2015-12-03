@@ -3,7 +3,6 @@ import logging
 from django.conf import settings
 from django.contrib import admin
 from django.db import connection
-from django.db.models import get_model
 from django.db.models.query import QuerySet
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.encoding import force_text
@@ -11,12 +10,7 @@ from django.utils.encoding import force_text
 from import_export import resources, fields
 from tablib import Databook, Dataset
 
-from .compat import import_string
-
-try:  # 1.7 and higher
-    from django.apps.apps import get_models
-except ImportError:
-    from django.db.models import get_models
+from .compat import get_model, get_models, import_string
 
 
 logger = logging.getLogger(__name__)
