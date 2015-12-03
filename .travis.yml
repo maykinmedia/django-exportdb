@@ -4,7 +4,7 @@ python:
   - "3.5"
 
 install:
-  - pip install coverage coveralls tox
+  - pip install coverage codecov coveralls tox
 
 script:
   - tox
