@@ -1,5 +1,7 @@
 import json
+from pkg_resources import parse_version
 
+import django
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -62,6 +64,7 @@ class ExportView(ExportPermissionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super(ExportView, self).get_context_data(**kwargs)
         context['title'] = _('Export database')
+        context['jquery_in_vendor'] = (parse_version(django.get_version()) >= parse_version('1.9.0'))
         context['models'] = [
             u'{name} ({app}.{model})'.format(
                 name=model._meta.verbose_name,

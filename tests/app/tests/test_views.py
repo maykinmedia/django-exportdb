@@ -1,8 +1,11 @@
 from __future__ import unicode_literals
 
+from pkg_resources import parse_version
+
 import mock
 from datetime import date
 
+import django
 from django import forms
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -44,6 +47,12 @@ class ViewTests(TestCase):
             _('user (auth.User)'),
             _('content type (contenttypes.ContentType)')
         ]))
+
+        if parse_version(django.get_version()) >= parse_version('1.9.0'):
+            self.assertContains(response, '/static/admin/js/vendor/jquery/jquery.js', count=1)
+        else:
+            self.assertContains(response, '/static/admin/js/jquery.js', count=1)
+
         self.assertIsInstance(response.context['form'], forms.Form)
 
     @override_settings(EXPORTDB_CONFIRM_FORM='tests.app.tests.test_views.ExportForm')
