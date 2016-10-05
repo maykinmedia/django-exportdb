@@ -88,7 +88,7 @@ def modelresource_factory(model, resource_class=ExportModelResource, **meta_kwar
     class_name = model.__name__ + str('Resource')
     class_attrs = {'Meta': Meta}
 
-    all_fields = model._meta.get_all_field_names()
+    all_fields = [f.name for f in model._meta.get_fields()]
     for field in field_names:
         # it's a real field, the meta class deals with this
         if field in all_fields and field not in field_labels:
