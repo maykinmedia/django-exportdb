@@ -1,3 +1,5 @@
+import django
+
 try:
     from django.utils.module_loading import import_string  # noqa
 except ImportError:  # noqa
@@ -12,3 +14,7 @@ try:
 except ImportError:  # noqa
     # django < 1.7
     from django.db.models import get_model, get_models
+
+
+def jquery_in_vendor():
+    return django.VERSION >= (1, 9, 0)

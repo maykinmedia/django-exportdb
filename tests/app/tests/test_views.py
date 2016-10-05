@@ -12,7 +12,9 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.translation import ugettext as _
 
+from exportdb.compat import jquery_in_vendor
 from exportdb.exporter import Exporter
+
 
 try:
     from django.test import override_settings
@@ -48,7 +50,7 @@ class ViewTests(TestCase):
             _('content type (contenttypes.ContentType)')
         ]))
 
-        if parse_version(django.get_version()) >= parse_version('1.9.0'):
+        if jquery_in_vendor():
             self.assertContains(response, '/static/admin/js/vendor/jquery/jquery.js', count=1)
         else:
             self.assertContains(response, '/static/admin/js/jquery.js', count=1)

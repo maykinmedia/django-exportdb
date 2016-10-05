@@ -15,7 +15,7 @@ from django.views.generic import FormView, View
 import rules
 from celery.result import AsyncResult
 
-from .compat import import_string
+from .compat import import_string, jquery_in_vendor
 from .exporter import get_export_models, Exporter
 from .tasks import export
 
@@ -64,7 +64,7 @@ class ExportView(ExportPermissionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super(ExportView, self).get_context_data(**kwargs)
         context['title'] = _('Export database')
-        context['jquery_in_vendor'] = (parse_version(django.get_version()) >= parse_version('1.9.0'))
+        context['jquery_in_vendor'] = jquery_in_vendor()
         context['models'] = [
             u'{name} ({app}.{model})'.format(
                 name=model._meta.verbose_name,
