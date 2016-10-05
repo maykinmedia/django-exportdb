@@ -1,15 +1,20 @@
 from __future__ import unicode_literals
 
+from pkg_resources import parse_version
+
 import mock
 from datetime import date
 
+import django
 from django import forms
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.translation import ugettext as _
 
+from exportdb.compat import jquery_in_vendor
 from exportdb.exporter import Exporter
+
 
 try:
     from django.test import override_settings
@@ -44,6 +49,12 @@ class ViewTests(TestCase):
             _('user (auth.User)'),
             _('content type (contenttypes.ContentType)')
         ]))
+
+        if jquery_in_vendor():
+            self.assertContains(response, '/static/admin/js/vendor/jquery/jquery.js', count=1)
+        else:
+            self.assertContains(response, '/static/admin/js/jquery.js', count=1)
+
         self.assertIsInstance(response.context['form'], forms.Form)
 
     @override_settings(EXPORTDB_CONFIRM_FORM='tests.app.tests.test_views.ExportForm')
