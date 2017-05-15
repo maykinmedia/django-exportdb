@@ -2,4 +2,4 @@ Django>=1.6
 django-import-export==0.5.1
 celery==4.0.2
 django-celery==3.2.1
-rules==1.2
+rules==1.2.1
