@@ -1,5 +1,5 @@
 Django>=1.6
 django-import-export==1.0.1
-celery==4.2.0
+celery==4.2.1
 django-celery==3.2.2
 rules==1.3
